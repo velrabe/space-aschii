@@ -10,6 +10,11 @@ const ASTEROID_CONFIG = {
         low: 'orange',               // Color for low level asteroids
         medium: 'red',               // Color for medium level asteroids  
         high: 'purple'               // Color for high level asteroids
+    },
+    spritePaths: {                   // Paths to asteroid sprite files
+        low: './assets/asteroids/asteroid_low.svg',
+        medium: './assets/asteroids/asteroid_medium.svg',
+        high: './assets/asteroids/asteroid_high.svg'
     }
 };
 
@@ -41,7 +46,8 @@ class Asteroid {
         this.maxHealth = ASTEROID_CONFIG.healthVariation[level];
         this.health = this.maxHealth;
         this.contents = this.generateContents();
-        this.asteroidGroup = this.createAsteroidGraphics(position);
+        this.asteroidGroup = new paper.Group(); // Create empty group first
+        this.createAsteroidGraphics(position);
     }
 
     getRandomLevel() {
@@ -53,64 +59,31 @@ class Asteroid {
     }
 
     createAsteroidGraphics(position) {
-        const asteroid = new paper.Group();
+        // Load the appropriate SVG sprite based on asteroid level
+        const spritePath = ASTEROID_CONFIG.spritePaths[this.level];
         
-        // Create main circle with color based on level
-        const circle = new paper.Path.Circle({
-            center: new paper.Point(0, 0),
-            radius: this.radius,
-            strokeColor: ASTEROID_CONFIG.colors[this.level],
-            strokeWidth: 2
+        paper.project.importSVG(spritePath, (item) => {
+            // Adjust size if needed
+            const scale = this.radius / 25; // Assuming the SVG is designed for a 25px base radius
+            item.scale(scale);
+            
+            // Add the SVG to the group
+            this.asteroidGroup.addChild(item);
+            
+            // Add health display text
+            this.healthText = new paper.PointText({
+                point: new paper.Point(0, 0),
+                content: `${this.health}/${this.maxHealth}`,
+                fillColor: 'white',
+                fontFamily: 'Courier New',
+                fontSize: 10,
+                justification: 'center'
+            });
+            this.asteroidGroup.addChild(this.healthText);
+            
+            // Position the asteroid
+            this.asteroidGroup.position = position;
         });
-        
-        // Add some ASCII-style details (*)
-        const crossH = new paper.Path.Line(
-            new paper.Point(-this.radius * 0.7, 0),
-            new paper.Point(this.radius * 0.7, 0)
-        );
-        crossH.strokeColor = ASTEROID_CONFIG.colors[this.level];
-        crossH.strokeWidth = 2;
-        
-        const crossV = new paper.Path.Line(
-            new paper.Point(0, -this.radius * 0.7),
-            new paper.Point(0, this.radius * 0.7)
-        );
-        crossV.strokeColor = ASTEROID_CONFIG.colors[this.level];
-        crossV.strokeWidth = 2;
-        
-        const crossD1 = new paper.Path.Line(
-            new paper.Point(-this.radius * 0.5, -this.radius * 0.5),
-            new paper.Point(this.radius * 0.5, this.radius * 0.5)
-        );
-        crossD1.strokeColor = ASTEROID_CONFIG.colors[this.level];
-        crossD1.strokeWidth = 2;
-        
-        const crossD2 = new paper.Path.Line(
-            new paper.Point(-this.radius * 0.5, this.radius * 0.5),
-            new paper.Point(this.radius * 0.5, -this.radius * 0.5)
-        );
-        crossD2.strokeColor = ASTEROID_CONFIG.colors[this.level];
-        crossD2.strokeWidth = 2;
-        
-        asteroid.addChild(circle);
-        asteroid.addChild(crossH);
-        asteroid.addChild(crossV);
-        asteroid.addChild(crossD1);
-        asteroid.addChild(crossD2);
-        
-        // Add text to show health status
-        this.healthText = new paper.PointText({
-            point: new paper.Point(0, 0),
-            content: `${this.health}/${this.maxHealth}`,
-            fillColor: 'white',
-            fontFamily: 'Courier New',
-            fontSize: 10,
-            justification: 'center'
-        });
-        asteroid.addChild(this.healthText);
-        
-        asteroid.position = position;
-        return asteroid;
     }
 
     generateContents() {
@@ -166,23 +139,25 @@ class Asteroid {
     }
 
     updateHealthDisplay() {
-        this.healthText.content = `${this.health}/${this.maxHealth}`;
-        
-        // Update visual appearance based on damage percentage
-        const damagePercent = 1 - (this.health / this.maxHealth);
-        
-        // Make the asteroid look more damaged as health decreases
-        this.asteroidGroup.opacity = 1 - (damagePercent * 0.3); // Fade slightly
-        
-        // Add "cracks" or damage indicators
-        if (damagePercent > 0.3 && !this.crackLevel1) {
-            this.addCracks(1);
-            this.crackLevel1 = true;
-        }
-        
-        if (damagePercent > 0.6 && !this.crackLevel2) {
-            this.addCracks(2);
-            this.crackLevel2 = true;
+        if (this.healthText) {
+            this.healthText.content = `${this.health}/${this.maxHealth}`;
+            
+            // Update visual appearance based on damage percentage
+            const damagePercent = 1 - (this.health / this.maxHealth);
+            
+            // Make the asteroid look more damaged as health decreases
+            this.asteroidGroup.opacity = 1 - (damagePercent * 0.3); // Fade slightly
+            
+            // Add "cracks" or damage indicators if they weren't already visualized in the sprite
+            if (damagePercent > 0.3 && !this.crackLevel1) {
+                this.addCracks(1);
+                this.crackLevel1 = true;
+            }
+            
+            if (damagePercent > 0.6 && !this.crackLevel2) {
+                this.addCracks(2);
+                this.crackLevel2 = true;
+            }
         }
     }
 
@@ -199,33 +174,29 @@ class Asteroid {
             crackPath.strokeColor = 'white';
             crackPath.strokeWidth = 1;
             
-            const startPoint = new paper.Point(
-                Math.cos(angle) * this.radius * 0.5,
-                Math.sin(angle) * this.radius * 0.5
-            );
+            // Start point at some random distance from center
+            const startDist = this.radius * (0.2 + Math.random() * 0.3);
+            const startX = Math.cos(angle) * startDist;
+            const startY = Math.sin(angle) * startDist;
             
-            const endPoint = new paper.Point(
-                startPoint.x + Math.cos(angle) * length,
-                startPoint.y + Math.sin(angle) * length
-            );
+            // End point
+            const endX = Math.cos(angle) * (startDist + length);
+            const endY = Math.sin(angle) * (startDist + length);
             
-            crackPath.add(startPoint);
+            // Create a slightly jagged line for the crack
+            crackPath.add(new paper.Point(startX, startY));
             
-            // Add some randomness to the crack
-            const midPoint1 = new paper.Point(
-                startPoint.x + (endPoint.x - startPoint.x) * 0.33 + (Math.random() - 0.5) * 5,
-                startPoint.y + (endPoint.y - startPoint.y) * 0.33 + (Math.random() - 0.5) * 5
-            );
+            // Add 1-3 intermediate points to make the crack jagged
+            const segments = 1 + Math.floor(Math.random() * 3);
+            for (let j = 1; j <= segments; j++) {
+                const segmentDist = startDist + (length * j / (segments + 1));
+                const variance = this.radius * 0.1;
+                const segmentX = Math.cos(angle) * segmentDist + (Math.random() * variance - variance/2);
+                const segmentY = Math.sin(angle) * segmentDist + (Math.random() * variance - variance/2);
+                crackPath.add(new paper.Point(segmentX, segmentY));
+            }
             
-            const midPoint2 = new paper.Point(
-                startPoint.x + (endPoint.x - startPoint.x) * 0.66 + (Math.random() - 0.5) * 5,
-                startPoint.y + (endPoint.y - startPoint.y) * 0.66 + (Math.random() - 0.5) * 5
-            );
-            
-            crackPath.add(midPoint1);
-            crackPath.add(midPoint2);
-            crackPath.add(endPoint);
-            
+            crackPath.add(new paper.Point(endX, endY));
             crackGroup.addChild(crackPath);
         }
         

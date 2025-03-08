@@ -1,0 +1,31 @@
+{
+  "name": "space-aschii",
+  "version": "1.0.0",
+  "description": "Multiplayer space mining game",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify src/index.js -o public/bundle.js",
+    "start": "node server/server.js",
+    "dev": "npm run build && npm start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/velrabe/space-aschii.git"
+  },
+  "keywords": ["game", "space", "multiplayer", "ascii", "svg"],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/velrabe/space-aschii/issues"
+  },
+  "homepage": "https://github.com/velrabe/space-aschii#readme",
+  "devDependencies": {
+    "browserify": "^17.0.0"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.1",
+    "ws": "^8.16.0"
+  }
+}

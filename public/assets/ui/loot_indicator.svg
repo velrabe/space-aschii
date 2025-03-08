@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Анимация пульсации для привлечения внимания -->
+    <animate id="pulseAnimation" 
+             attributeName="r" 
+             values="20;25;20" 
+             dur="2s" 
+             repeatCount="indefinite" />
+    
+    <!-- Анимация вращения -->
+    <animateTransform id="rotateAnimation"
+                     attributeName="transform"
+                     type="rotate"
+                     from="0 50 50"
+                     to="360 50 50"
+                     dur="10s"
+                     repeatCount="indefinite" />
+  </defs>
+  
+  <g id="lootIndicator" transform="translate(50, 50)">
+    <!-- Внешний круг -->
+    <circle cx="0" cy="0" r="20" 
+            fill="none" 
+            stroke="gold" 
+            stroke-width="2" 
+            stroke-dasharray="4,2" />
+    
+    <!-- Внутренний круг -->
+    <circle cx="0" cy="0" r="12" 
+            fill="rgba(255,215,0,0.2)" 
+            stroke="gold" 
+            stroke-width="1" />
+    
+    <!-- Лучи -->
+    <g id="rays">
+      <line x1="0" y1="-25" x2="0" y2="-35" stroke="gold" stroke-width="1" />
+      <line x1="25" y1="0" x2="35" y2="0" stroke="gold" stroke-width="1" />
+      <line x1="0" y1="25" x2="0" y2="35" stroke="gold" stroke-width="1" />
+      <line x1="-25" y1="0" x2="-35" y2="0" stroke="gold" stroke-width="1" />
+      
+      <line x1="18" y1="-18" x2="25" y2="-25" stroke="gold" stroke-width="1" />
+      <line x1="18" y1="18" x2="25" y2="25" stroke="gold" stroke-width="1" />
+      <line x1="-18" y1="18" x2="-25" y2="25" stroke="gold" stroke-width="1" />
+      <line x1="-18" y1="-18" x2="-25" y2="-25" stroke="gold" stroke-width="1" />
+    </g>
+    
+    <!-- Символ сокровища -->
+    <text x="0" y="0" 
+          font-family="Courier New" 
+          font-size="16" 
+          font-weight="bold" 
+          fill="gold" 
+          text-anchor="middle" 
+          dominant-baseline="middle">$</text>
+    
+    <!-- Маленькие частицы вокруг -->
+    <circle cx="15" cy="-8" r="1" fill="gold" />
+    <circle cx="-10" cy="12" r="1" fill="gold" />
+    <circle cx="-12" cy="-15" r="1" fill="gold" />
+    <circle cx="8" cy="17" r="1" fill="gold" />
+  </g>
+</svg> 

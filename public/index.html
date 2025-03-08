@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extractor</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Include Paper.js for vector graphics -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paper.js/0.12.17/paper-full.min.js"></script>
+    <style>
+        .wiki-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #1a1a2e;
+            color: #00aaff;
+            border: 2px solid #3366aa;
+            border-radius: 5px;
+            padding: 8px 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+            text-decoration: none;
+            box-shadow: 0 0 15px rgba(0, 170, 255, 0.4);
+        }
+        
+        .wiki-button:hover {
+            background-color: #2a3a55;
+            color: #ffffff;
+            box-shadow: 0 0 20px rgba(0, 170, 255, 0.7);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" resize></canvas>
+    
+    <!-- Wiki Button -->
+    <a href="assets/preview.html" class="wiki-button" target="_blank">WIKI</a>
+    
+    <!-- Include bundle.js which contains all modules -->
+    <script src="bundle.js"></script>
+</body>
+</html> 

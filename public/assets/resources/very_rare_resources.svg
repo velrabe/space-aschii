@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <g id="resource-very-rare">
+    <!-- Ancient Artifacts -->
+    <g id="ancient-artifacts" transform="translate(25, 25)">
+      <!-- Mysterious ancient artifact with glyphs -->
+      <rect x="-12" y="-12" width="24" height="24" rx="3" ry="3" 
+            fill="#775533" stroke="#AA7744" stroke-width="1.5" />
+      
+      <!-- Ancient inscriptions/glyphs -->
+      <path d="M -8 -8 L 8 -8" stroke="#DDC0A0" stroke-width="1" />
+      <path d="M -8 -4 L 8 -4" stroke="#DDC0A0" stroke-width="1" />
+      <path d="M -8 0 L 0 0" stroke="#DDC0A0" stroke-width="1" />
+      <path d="M -8 4 L 8 4" stroke="#DDC0A0" stroke-width="1" />
+      <path d="M -8 8 L 8 8" stroke="#DDC0A0" stroke-width="1" />
+      
+      <!-- Mysterious symbol -->
+      <circle cx="5" cy="0" r="4" stroke="#FFD700" stroke-width="0.75" fill="none" />
+      <circle cx="5" cy="0" r="1" fill="#FFD700" />
+      
+      <text x="0" y="0" font-family="Courier New" font-size="7" fill="#FFD700" text-anchor="middle" dominant-baseline="middle">AA</text>
+    </g>
+
+    <!-- Antimatter Cores -->
+    <g id="antimatter-cores" transform="translate(75, 75)">
+      <!-- Unstable pulsating antimatter core -->
+      <circle cx="0" cy="0" r="12" fill="#1A0429" stroke="#6600CC" stroke-width="1.5" />
+      <circle cx="0" cy="0" r="8" fill="#270540" stroke="none" />
+      <circle cx="0" cy="0" r="4" fill="#3A075A" stroke="none" />
+      
+      <!-- Energy emission rays -->
+      <path d="M -20 0 L 20 0" stroke="#CC00FF" stroke-width="0.75" />
+      <path d="M 0 -20 L 0 20" stroke="#CC00FF" stroke-width="0.75" />
+      <path d="M -15 -15 L 15 15" stroke="#CC00FF" stroke-width="0.5" />
+      <path d="M -15 15 L 15 -15" stroke="#CC00FF" stroke-width="0.5" />
+      
+      <!-- Particles -->
+      <circle cx="-10" cy="-5" r="1" fill="#FF00FF" />
+      <circle cx="7" cy="8" r="1" fill="#FF00FF" />
+      <circle cx="10" cy="-8" r="1" fill="#FF00FF" />
+      <circle cx="-8" cy="10" r="1" fill="#FF00FF" />
+      
+      <text x="0" y="0" font-family="Courier New" font-size="6" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">AM</text>
+    </g>
+  </g>
+</svg> 

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Градиент для луча экстрактора -->
+    <linearGradient id="extractorBeamGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00FFFF;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#00FFFF;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#00FFFF;stop-opacity:0.8" />
+    </linearGradient>
+    
+    <!-- Анимация луча -->
+    <animate xlink:href="#extractorBeam" 
+             attributeName="stroke-dashoffset" 
+             from="0" to="20" 
+             dur="1s" 
+             repeatCount="indefinite" />
+  </defs>
+  
+  <!-- Основной луч экстрактора -->
+  <g id="extractorBeamGroup">
+    <line id="extractorBeam" 
+          x1="10" y1="50" 
+          x2="90" y2="50" 
+          stroke="url(#extractorBeamGradient)" 
+          stroke-width="3" 
+          stroke-linecap="round"
+          stroke-dasharray="5,3" />
+    
+    <!-- Внешнее свечение -->
+    <line x1="10" y1="50" 
+          x2="90" y2="50" 
+          stroke="#00FFFF" 
+          stroke-width="6" 
+          stroke-linecap="round"
+          stroke-opacity="0.2" />
+    
+    <!-- Частицы вдоль луча -->
+    <circle cx="25" cy="50" r="1.5" fill="#FFFFFF" />
+    <circle cx="40" cy="50" r="1" fill="#FFFFFF" />
+    <circle cx="60" cy="50" r="1.5" fill="#FFFFFF" />
+    <circle cx="75" cy="50" r="1" fill="#FFFFFF" />
+  </g>
+</svg> 

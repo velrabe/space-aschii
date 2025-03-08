@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space ASCHII Assets Preview</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #0a0a1a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #00aaff;
+            margin-bottom: 30px;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #334455;
+            padding-bottom: 10px;
+        }
+        
+        .tab-button {
+            background-color: #223344;
+            color: #aaccff;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .tab-button:hover {
+            background-color: #2a4055;
+        }
+        
+        .tab-button.active {
+            background-color: #3366aa;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .asset-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .asset-card {
+            background-color: #1a1a2e;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .asset-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .asset-preview {
+            width: 100%;
+            height: 150px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #222233;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        .asset-preview svg {
+            max-width: 90%;
+            max-height: 90%;
+        }
+        
+        .asset-name {
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+            word-break: break-all;
+        }
+        
+        .asset-name a {
+            color: #66aaff;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        
+        .asset-name a:hover {
+            color: #99ccff;
+            text-decoration: underline;
+        }
+        
+        .loading {
+            text-align: center;
+            font-size: 18px;
+            margin: 50px 0;
+            color: #66aaff;
+        }
+        
+        .no-assets {
+            text-align: center;
+            color: #ff6666;
+            margin: 50px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Space ASCHII Assets Preview</h1>
+    
+    <div class="tabs" id="assetTabs">
+        <!-- Tab buttons will be generated here -->
+    </div>
+    
+    <div id="tabContent">
+        <!-- Tab content will be generated here -->
+        <div class="loading" id="loadingMessage">Loading assets...</div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Define the directories to scan
+            const directories = ['ships', 'asteroids', 'resources', 'effects', 'ui'];
+            
+            // Get the tabs and content container
+            const tabsContainer = document.getElementById('assetTabs');
+            const contentContainer = document.getElementById('tabContent');
+            const loadingMessage = document.getElementById('loadingMessage');
+            
+            // Create tabs and content sections
+            directories.forEach((dir, index) => {
+                // Create the tab button
+                const tabButton = document.createElement('button');
+                tabButton.className = 'tab-button' + (index === 0 ? ' active' : '');
+                tabButton.textContent = dir.charAt(0).toUpperCase() + dir.slice(1);
+                tabButton.setAttribute('data-tab', dir);
+                tabsContainer.appendChild(tabButton);
+                
+                // Create the tab content
+                const tabContent = document.createElement('div');
+                tabContent.className = 'tab-content' + (index === 0 ? ' active' : '');
+                tabContent.id = `tab-${dir}`;
+                contentContainer.appendChild(tabContent);
+                
+                // Create asset grid for this tab
+                const assetGrid = document.createElement('div');
+                assetGrid.className = 'asset-grid';
+                assetGrid.id = `grid-${dir}`;
+                tabContent.appendChild(assetGrid);
+                
+                // Add loading indicator
+                const loadingIndicator = document.createElement('div');
+                loadingIndicator.className = 'loading';
+                loadingIndicator.textContent = `Loading ${dir} assets...`;
+                loadingIndicator.id = `loading-${dir}`;
+                assetGrid.appendChild(loadingIndicator);
+            });
+            
+            // Add tab switching functionality
+            const tabs = document.querySelectorAll('.tab-button');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    document.getElementById(`tab-${tab.getAttribute('data-tab')}`).classList.add('active');
+                });
+            });
+            
+            // Function to load assets for each directory
+            async function loadAssets() {
+                let assetsLoaded = 0;
+                
+                for (const dir of directories) {
+                    try {
+                        // Attempt to fetch the directory listing
+                        const response = await fetch(`${dir}/`);
+                        const html = await response.text();
+                        
+                        // Parse the HTML to find SVG files
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const links = Array.from(doc.querySelectorAll('a'));
+                        
+                        // Filter for SVG files
+                        const svgFiles = links
+                            .map(link => link.getAttribute('href'))
+                            .filter(href => href && href.toLowerCase().endsWith('.svg'));
+                        
+                        // Get the grid for this directory
+                        const grid = document.getElementById(`grid-${dir}`);
+                        
+                        // Remove loading indicator
+                        const loadingIndicator = document.getElementById(`loading-${dir}`);
+                        if (loadingIndicator) {
+                            grid.removeChild(loadingIndicator);
+                        }
+                        
+                        if (svgFiles.length === 0) {
+                            const noAssets = document.createElement('div');
+                            noAssets.className = 'no-assets';
+                            noAssets.textContent = `No SVG files found in /${dir}`;
+                            grid.appendChild(noAssets);
+                        } else {
+                            // Create a card for each SVG file
+                            for (const file of svgFiles) {
+                                const filePath = `${dir}/${file}`;
+                                
+                                try {
+                                    // Fetch the SVG content
+                                    const svgResponse = await fetch(filePath);
+                                    const svgContent = await svgResponse.text();
+                                    
+                                    // Create the asset card
+                                    const card = document.createElement('div');
+                                    card.className = 'asset-card';
+                                    
+                                    // Create the preview container
+                                    const preview = document.createElement('div');
+                                    preview.className = 'asset-preview';
+                                    preview.innerHTML = svgContent;
+                                    card.appendChild(preview);
+                                    
+                                    // Create the file name with link
+                                    const name = document.createElement('div');
+                                    name.className = 'asset-name';
+                                    const link = document.createElement('a');
+                                    link.href = filePath;
+                                    link.target = '_blank';
+                                    link.textContent = file;
+                                    name.appendChild(link);
+                                    card.appendChild(name);
+                                    
+                                    // Add the card to the grid
+                                    grid.appendChild(card);
+                                    assetsLoaded++;
+                                } catch (err) {
+                                    console.error(`Error loading SVG ${filePath}:`, err);
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error(`Error fetching directory ${dir}:`, err);
+                        const grid = document.getElementById(`grid-${dir}`);
+                        const loadingIndicator = document.getElementById(`loading-${dir}`);
+                        if (loadingIndicator) {
+                            grid.removeChild(loadingIndicator);
+                        }
+                        
+                        const errorMessage = document.createElement('div');
+                        errorMessage.className = 'no-assets';
+                        errorMessage.textContent = `Error loading ${dir} assets. If you're viewing locally, you may need to run a web server.`;
+                        grid.appendChild(errorMessage);
+                    }
+                }
+                
+                // Remove global loading message
+                if (loadingMessage) {
+                    loadingMessage.style.display = 'none';
+                }
+                
+                // If no assets were loaded, show a helpful message
+                if (assetsLoaded === 0) {
+                    const helpMessage = document.createElement('div');
+                    helpMessage.style.textAlign = 'center';
+                    helpMessage.style.margin = '30px';
+                    helpMessage.style.padding = '20px';
+                    helpMessage.style.backgroundColor = '#2a2a40';
+                    helpMessage.style.borderRadius = '8px';
+                    
+                    helpMessage.innerHTML = `
+                        <h3>No assets could be loaded</h3>
+                        <p>This preview page needs to be served by a web server to work properly.</p>
+                        <p>Try one of these methods:</p>
+                        <ol style="text-align: left; display: inline-block;">
+                            <li>Use Python's built-in HTTP server:
+                                <pre>python -m http.server</pre>
+                            </li>
+                            <li>Use Node.js with http-server:
+                                <pre>npx http-server</pre>
+                            </li>
+                            <li>Use Live Server extension in VS Code</li>
+                        </ol>
+                        <p>Then navigate to this page through the server.</p>
+                    `;
+                    
+                    contentContainer.appendChild(helpMessage);
+                }
+            }
+            
+            // Alternative approach: manual loading of assets
+            async function manualLoadAssets() {
+                // Hide the loading message first
+                if (loadingMessage) {
+                    loadingMessage.style.display = 'none';
+                }
+                
+                for (const dir of directories) {
+                    const grid = document.getElementById(`grid-${dir}`);
+                    const loadingIndicator = document.getElementById(`loading-${dir}`);
+                    
+                    if (loadingIndicator) {
+                        grid.removeChild(loadingIndicator);
+                    }
+                    
+                    // Find all SVG files for this directory
+                    const files = getSvgFilesForDirectory(dir);
+                    
+                    if (files.length === 0) {
+                        const noAssets = document.createElement('div');
+                        noAssets.className = 'no-assets';
+                        noAssets.textContent = `No SVG files found in /${dir}`;
+                        grid.appendChild(noAssets);
+                    } else {
+                        for (const file of files) {
+                            const filePath = `${dir}/${file}`;
+                            
+                            // Create the asset card
+                            const card = document.createElement('div');
+                            card.className = 'asset-card';
+                            
+                            // Create the preview container as an iframe
+                            const preview = document.createElement('div');
+                            preview.className = 'asset-preview';
+                            
+                            const iframe = document.createElement('iframe');
+                            iframe.src = filePath;
+                            iframe.style.width = '100%';
+                            iframe.style.height = '100%';
+                            iframe.style.border = 'none';
+                            preview.appendChild(iframe);
+                            card.appendChild(preview);
+                            
+                            // Create the file name with link
+                            const name = document.createElement('div');
+                            name.className = 'asset-name';
+                            const link = document.createElement('a');
+                            link.href = filePath;
+                            link.target = '_blank';
+                            link.textContent = file;
+                            name.appendChild(link);
+                            card.appendChild(name);
+                            
+                            // Add the card to the grid
+                            grid.appendChild(card);
+                        }
+                    }
+                }
+            }
+            
+            // This is a fallback function that you would modify with the actual filenames
+            function getSvgFilesForDirectory(dir) {
+                const fileMappings = {
+                    'ships': ['spaceship.svg'],
+                    'asteroids': ['asteroid_low.svg', 'asteroid_medium.svg', 'asteroid_high.svg'],
+                    'resources': ['common_resources.svg', 'uncommon_resources.svg', 'rare_resources.svg', 'very_rare_resources.svg'],
+                    'effects': ['extractor_beam.svg', 'asteroid_explosion.svg'],
+                    'ui': ['resource_panel.svg', 'loot_indicator.svg']
+                };
+                
+                return fileMappings[dir] || [];
+            }
+            
+            // Try the automatic loading first
+            loadAssets().catch(error => {
+                console.error('Error with automatic loading, falling back to manual:', error);
+                manualLoadAssets();
+            });
+        });
+    </script>
+</body>
+</html> 

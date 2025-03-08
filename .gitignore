@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build files
+public/bundle.js
+
+# Environment variables
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Zip files
+*.zip 

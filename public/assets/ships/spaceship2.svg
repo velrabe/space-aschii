@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(50, 50)">
+    <!-- Основной корпус второго корабля - более угловатый дизайн -->
+    <path d="M -15 -25 L 0 -30 L 15 -25 L 20 -5 L 25 5 L 15 15 L 5 25 L -5 25 L -15 15 L -25 5 L -20 -5 Z" 
+          fill="#3a7ca5" stroke="cyan" stroke-width="2" />
+    
+    <!-- Кабина -->
+    <circle cx="0" cy="-10" r="8" fill="#0f2942" stroke="white" stroke-width="1" />
+    
+    <!-- Двигатели -->
+    <rect x="-22" y="5" width="8" height="10" rx="3" ry="3" fill="#3a7ca5" stroke="cyan" />
+    <rect x="14" y="5" width="8" height="10" rx="3" ry="3" fill="#3a7ca5" stroke="cyan" />
+    
+    <!-- Пламя двигателей -->
+    <path d="M -18 15 L -18 25 L -15 15 Z" fill="#00ffff" />
+    <path d="M 18 15 L 18 25 L 15 15 Z" fill="#00ffff" />
+    
+    <!-- Оружие -->
+    <rect x="-10" y="-20" width="4" height="10" fill="#3a7ca5" stroke="cyan" />
+    <rect x="6" y="-20" width="4" height="10" fill="#3a7ca5" stroke="cyan" />
+    
+    <!-- Декоративные элементы -->
+    <line x1="-10" y1="0" x2="10" y2="0" stroke="cyan" stroke-width="1" />
+    <line x1="0" y1="-15" x2="0" y2="15" stroke="cyan" stroke-width="1" />
+    <line x1="-7" y1="-7" x2="7" y2="7" stroke="white" stroke-width="0.5" />
+    <line x1="-7" y1="7" x2="7" y2="-7" stroke="white" stroke-width="0.5" />
+    
+    <!-- Щиты -->
+    <path d="M -25 -10 Q -30 0 -25 10" fill="none" stroke="rgba(0, 255, 255, 0.5)" stroke-width="1" stroke-dasharray="2,2" />
+    <path d="M 25 -10 Q 30 0 25 10" fill="none" stroke="rgba(0, 255, 255, 0.5)" stroke-width="1" stroke-dasharray="2,2" />
+  </g>
+</svg> 

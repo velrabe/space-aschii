@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="100" height="100" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(50, 50)">
+    <!-- Основной корпус корабля -->
+    <path d="M -20 -10 L -10 -20 L 10 -20 L 20 -10 L 10 20 L 0 15 L -10 20 Z" 
+          fill="#1a1a2e" stroke="white" stroke-width="2" />
+    
+    <!-- Кабина -->
+    <circle cx="0" cy="-5" r="7" fill="#1e3a5f" stroke="white" stroke-width="1" />
+    
+    <!-- Двигатели -->
+    <rect x="-15" y="10" width="6" height="15" rx="2" ry="2" fill="#1a1a2e" stroke="white" />
+    <rect x="9" y="10" width="6" height="15" rx="2" ry="2" fill="#1a1a2e" stroke="white" />
+    
+    <!-- Пламя двигателей -->
+    <path d="M -12 25 L -12 35 L -9 25 Z" fill="#ff4500" />
+    <path d="M 12 25 L 12 35 L 9 25 Z" fill="#ff4500" />
+    
+    <!-- Красный передний бампер -->
+    <path d="M -10 -20 Q 0 -25 10 -20" fill="none" stroke="red" stroke-width="3" />
+    
+    <!-- ASCII-стиль декоративные элементы -->
+    <line x1="-15" y1="0" x2="15" y2="0" stroke="white" stroke-width="1.5" />
+    <line x1="0" y1="-15" x2="0" y2="10" stroke="white" stroke-width="1.5" />
+    <line x1="-7" y1="-7" x2="7" y2="7" stroke="white" stroke-width="1" />
+    <line x1="-7" y1="7" x2="7" y2="-7" stroke="white" stroke-width="1" />
+  </g>
+</svg> 
