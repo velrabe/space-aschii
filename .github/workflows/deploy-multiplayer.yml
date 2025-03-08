@@ -1,0 +1,51 @@
+name: Deploy Multiplayer
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'server/**'
+      - 'src/network/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-multiplayer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Deploy multiplayer server
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          
+          # Add host to known_hosts
+          ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
+          
+          # Copy server files to server
+          rsync -avz --delete -e "ssh -i ~/.ssh/deploy_key" \
+            server/ \
+            src/network/ \
+            package.json \
+            package-lock.json \
+            $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH
+          
+          # Run deploy multiplayer script on server
+          ssh -i ~/.ssh/deploy_key $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && bash scripts/deploy_multiplayer.sh" 
