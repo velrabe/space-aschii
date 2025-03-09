@@ -144,7 +144,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Define the directories to scan
-            const directories = ['ships', 'asteroids', 'resources', 'effects', 'ui'];
+            const directories = ['ships', 'asteroids', 'resources', 'effects', 'ui', 'backgrounds'];
             
             // Get the tabs and content container
             const tabsContainer = document.getElementById('assetTabs');
@@ -382,7 +382,8 @@
                     'asteroids': ['asteroid_low.svg', 'asteroid_medium.svg', 'asteroid_high.svg'],
                     'resources': ['common_resources.svg', 'uncommon_resources.svg', 'rare_resources.svg', 'very_rare_resources.svg'],
                     'effects': ['extractor_beam.svg', 'asteroid_explosion.svg'],
-                    'ui': ['resource_panel.svg', 'loot_indicator.svg']
+                    'ui': ['resource_panel.svg', 'loot_indicator.svg'],
+                    'backgrounds': ['background_1.svg', 'background_2.svg', 'background_3.svg']
                 };
                 
                 return fileMappings[dir] || [];

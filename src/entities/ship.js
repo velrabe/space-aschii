@@ -7,15 +7,14 @@ const SHIP_CONFIG = {
 
 // Ship class to encapsulate ship behavior
 class Ship {
-    constructor(position, size = SHIP_CONFIG.size, id = null, isRemote = false, shipType = 'spaceship.svg') {
-        this.id = id;
+    constructor(position, size = SHIP_CONFIG.size, shipType = 'spaceship.svg') {
         this.size = size;
         this.direction = 270; // Start facing upward (in degrees)
-        this.isRemote = isRemote; // Признак удаленного корабля (другой игрок)
         this.shipType = shipType; // Тип корабля (спрайт)
         this.shipGroup = this.createShipGraphics(position);
         this.energy = 10; // Начальный заряд энергии
         this.resources = 0; // Начальное количество ресурсов
+        this.velocity = new paper.Point(0, 0); // Добавляем свойство для скорости
     }
 
     createShipGraphics(position) {
@@ -35,19 +34,6 @@ class Ship {
             shipGroup.position = position;
             // Apply additional 90 degree rotation to the sprite
             shipGroup.rotate(this.direction + 90);
-            
-            // Добавляем ID над кораблем для мультиплеера
-            if (this.isRemote && this.id) {
-                const idText = new paper.PointText({
-                    point: new paper.Point(0, -this.size - 10),
-                    content: this.id.substr(0, 6), // Сокращенный ID для отображения
-                    fillColor: this.shipType.includes('2') ? 'cyan' : 'white',
-                    fontFamily: 'Courier New',
-                    fontSize: 10,
-                    justification: 'center'
-                });
-                shipGroup.addChild(idText);
-            }
         });
         
         return shipGroup;
@@ -81,6 +67,9 @@ class Ship {
             moveX -= Math.cos(directionRad) * speed * 0.5; // Backward is slower
             moveY -= Math.sin(directionRad) * speed * 0.5;
         }
+        
+        // Сохраняем текущую скорость для параллакса
+        this.velocity = new paper.Point(moveX, moveY);
         
         // Apply movement to ship
         this.shipGroup.position.x += moveX;
@@ -117,12 +106,8 @@ class Ship {
     }
     
     // Process input from InputManager to update ship movement
-    update(inputManager) {
-        // Обновление только для локального корабля игрока
-        if (this.isRemote) return false;
-        
-        // Get key states from input manager
-        const keyStates = inputManager.getKeyStates();
+    update(keyStates) {
+        // No need to call getKeyStates() since we're receiving the key states directly
         
         // Handle rotation
         if (keyStates.rotateLeft) {

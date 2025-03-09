@@ -2,6 +2,8 @@
 const { Ship } = require('../entities/ship.js');
 const { Asteroid } = require('../entities/asteroid.js');
 const { InputManager } = require('../input/inputManager.js');
+const { createKeyVisualizer } = require('../ui/keyVisualizer.js');
+const { BackgroundStars } = require('../entities/backgroundStars.js');
 
 // Set up paper.js
 paper.install(window);
@@ -10,6 +12,9 @@ paper.install(window);
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Paper.js with the canvas element
     paper.setup('gameCanvas');
+    
+    // Force an initial redraw to prevent blank screen
+    paper.view.draw();
     
     // Game configuration
     const config = {
@@ -31,6 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
         debugShots: true,  // Включить отладку выстрелов
         keyDebug: {}, // Объект для хранения отладочной информации о клавишах
         ship: null, // Корабль игрока
+        backgroundStars: null // Фоновые звезды
     };
 
     // ResourceManager class to handle resources
@@ -46,48 +52,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 ancientArtifacts: 0,
                 antimatterCores: 0
             };
-            
-            this.resourceText = new paper.PointText({
-                point: new paper.Point(20, 100),
-                content: 'Resources: 0',
-                fillColor: 'lightgreen',
-                fontFamily: 'Courier New',
-                fontSize: 16
-            });
         }
         
         addResources(resourceObject) {
-            for (const [type, amount] of Object.entries(resourceObject)) {
+            for (const type in resourceObject) {
                 if (this.resources.hasOwnProperty(type)) {
-                    this.resources[type] += amount;
+                    this.resources[type] += resourceObject[type];
                 }
             }
             
-            this.updateDisplay();
+            // Update total resources in ship
+            if (gameState.ship) {
+                gameState.ship.setResources(this.getResourceTotal());
+            }
         }
         
         getResourceTotal() {
-            return Object.values(this.resources).reduce((sum, value) => sum + value, 0);
+            return Object.values(this.resources).reduce((total, amount) => total + amount, 0);
         }
         
         spendResources(amount) {
             const total = this.getResourceTotal();
+            
             if (total >= amount) {
-                // Simplified approach: just reduce total by proportion
-                const factor = (total - amount) / total;
+                // Proportionally reduce all resources
+                const ratio = (total - amount) / total;
+                
                 for (const type in this.resources) {
-                    this.resources[type] = Math.floor(this.resources[type] * factor);
+                    this.resources[type] = Math.floor(this.resources[type] * ratio);
                 }
                 
-                this.updateDisplay();
+                // Update total resources in ship
+                if (gameState.ship) {
+                    gameState.ship.setResources(this.getResourceTotal());
+                }
+                
                 return true;
             }
             
             return false;
-        }
-        
-        updateDisplay() {
-            this.resourceText.content = `Resources: ${this.getResourceTotal()}`;
         }
     }
 
@@ -97,147 +100,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Создаем корабль игрока
     gameState.ship = new Ship(paper.view.center);
     
-    // Отображение энергии корабля
-    const energyText = new paper.PointText({
-        point: new paper.Point(20, 60),
-        content: 'Energy: ' + gameState.ship.getEnergy(),
-        fillColor: 'lightblue',
-        fontFamily: 'Courier New',
-        fontSize: 16
-    });
-    
-    // Отображение количества ресурсов
-    const resourceCountText = new paper.PointText({
-        point: new paper.Point(20, 80),
-        content: 'Resources: ' + gameState.ship.getResources(),
-        fillColor: 'green',
-        fontFamily: 'Courier New',
-        fontSize: 16
-    });
-    
-    // Отладочный текст для клавиш и других событий
-    const keyDebugText = new paper.PointText({
-        point: new paper.Point(20, paper.view.size.height - 20),
-        content: 'Key Debug: Ready',
-        fillColor: 'yellow',
-        fontFamily: 'Courier New',
-        fontSize: 14
-    });
-    
-    // Отладочный текст для выстрелов
-    const debugText = new paper.PointText({
-        point: new paper.Point(20, paper.view.size.height - 40),
-        content: 'Debug: Ready',
-        fillColor: 'orange',
-        fontFamily: 'Courier New',
-        fontSize: 14
-    });
-    
     // Создаем астероид
     const asteroid = new Asteroid(new paper.Point(600, 300), 'high');
     
-    // Визуализация клавиш
-    const keySize = 30;
-    const keysGroup = new paper.Group();
-    
-    // Создать клавишу с заданными параметрами
-    function createKeyVisualizer(x, y, label, fillColor = 'gray') {
-        const key = new paper.Path.Rectangle({
-            point: [x, y],
-            size: [keySize, keySize],
-            radius: 5,
-            fillColor: fillColor,
-            strokeColor: 'white',
-            strokeWidth: 2
-        });
-        
-        const keyLabel = new paper.PointText({
-            point: new paper.Point(x + keySize/2, y + keySize/2 + 5),
-            content: label,
-            fillColor: 'white',
-            fontFamily: 'Courier New',
-            fontSize: 14,
-            justification: 'center'
-        });
-        
-        const keyGroup = new paper.Group([key, keyLabel]);
-        return {group: keyGroup, background: key};
-    }
-    
-    // Создаем группу визуализаторов клавиш
-    const keysX = paper.view.size.width - 120;
-    const keysY = paper.view.size.height - 120;
-    
-    // Up key
-    const upKey = createKeyVisualizer(keysX, keysY - keySize, '↑').background;
-    
-    // Left, Down, Right keys
-    const leftKey = createKeyVisualizer(keysX - keySize, keysY, '←').background;
-    const downKey = createKeyVisualizer(keysX, keysY, '↓').background;
-    const rightKey = createKeyVisualizer(keysX + keySize, keysY, '→').background;
-    
-    // Обновление визуализации состояния клавиш
-    function updateKeyStateVisualizer() {
-        // Get key states from input manager instead of gameState
-        const keyStates = inputManager.getKeyStates();
-        
-        upKey.fillColor = keyStates.forward ? 'green' : 'gray';
-        downKey.fillColor = keyStates.backward ? 'green' : 'gray';
-        leftKey.fillColor = keyStates.rotateLeft ? 'green' : 'gray';
-        rightKey.fillColor = keyStates.rotateRight ? 'green' : 'gray';
-    }
-    
-    // Create UI elements
-    const fpsText = new paper.PointText({
-        point: new paper.Point(20, 20),
-        content: 'FPS: 0',
-        fillColor: 'white',
-        fontFamily: 'Courier New',
-        fontSize: 16
-    });
-    
-    const positionText = new paper.PointText({
-        point: new paper.Point(20, 40),
-        content: 'Position: 0, 0',
-        fillColor: 'white',
-        fontFamily: 'Courier New',
-        fontSize: 16
-    });
-    
-    const velocityText = new paper.PointText({
-        point: new paper.Point(20, 60),
-        content: 'Velocity: 0, 0',
-        fillColor: 'white',
-        fontFamily: 'Courier New',
-        fontSize: 16
-    });
-    
-    const angleText = new paper.PointText({
-        point: new paper.Point(20, 80),
-        content: 'Angle: 0°',
-        fillColor: 'white',
-        fontFamily: 'Courier New',
-        fontSize: 16
-    });
+    // Создаем и инициализируем звездный фон
+    gameState.backgroundStars = new BackgroundStars();
+    gameState.backgroundStars.initialize();
     
     // Main game loop
     paper.view.onFrame = function(event) {
-        // Calculate FPS
-        const fps = Math.round(1 / (event.delta || 0.001));
-        fpsText.content = `FPS: ${fps}`;
+        // Обновляем фоновую анимацию звезд с небольшой фиксированной скоростью
+        // или используем скорость корабля, если она доступна
+        if (gameState.backgroundStars) {
+            const velocity = gameState.ship ? gameState.ship.velocity : new paper.Point(0.3, 0.1);
+            gameState.backgroundStars.update(velocity);
+        }
         
-        // Update ship position
+        // Update ship position - pass the key states directly
         if (gameState.ship) {
-            gameState.ship.update(inputManager.getInputState());
-            
-            // Update position text
-            positionText.content = `Position: ${Math.round(gameState.ship.position.x)}, ${Math.round(gameState.ship.position.y)}`;
-            
-            // Update velocity text
-            velocityText.content = `Velocity: ${Math.round(gameState.ship.velocity.x * 100) / 100}, ${Math.round(gameState.ship.velocity.y * 100) / 100}`;
-            
-            // Update angle text
-            angleText.content = `Angle: ${Math.round(gameState.ship.angle)}°`;
+            gameState.ship.update(inputManager.getKeyStates());
         }
         
         // Update extractors
@@ -273,8 +154,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        // Update key state visualizer
-        updateKeyStateVisualizer();
+        // Force redraw to ensure all visual elements are updated
+        paper.view.draw();
     };
     
     // Handle window resize
