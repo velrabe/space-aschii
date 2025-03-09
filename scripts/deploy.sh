@@ -38,6 +38,12 @@ mkdir -p /etc/nginx/sites-enabled
 DOMAIN_NAME=${DOMAIN_NAME:-"_"}  # Default to catch-all if no domain specified
 USE_HTTPS=${USE_HTTPS:-"no"}     # Default to no HTTPS
 
+# Try to detect existing SSL certificate
+if [ "$DOMAIN_NAME" != "_" ] && [ -d "/etc/letsencrypt/live/$DOMAIN_NAME" ]; then
+    echo "Existing SSL certificate detected for $DOMAIN_NAME"
+    USE_HTTPS="yes"
+fi
+
 # Automatically use HTTPS if domain name is provided
 if [ "$DOMAIN_NAME" != "_" ] && [ "$USE_HTTPS" = "no" ]; then
     echo "Domain name detected, enabling HTTPS by default. Set USE_HTTPS=no to disable."
@@ -100,6 +106,23 @@ server {
     listen 80;
     server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
     
+    # Redirect HTTP to HTTPS if HTTPS is enabled
+    $(if [ "$USE_HTTPS" = "yes" ]; then
+        echo "    return 301 https://\$host\$request_uri;"
+        echo "}"
+        echo ""
+        echo "server {"
+        echo "    listen 443 ssl;"
+        echo "    server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};"
+        echo ""
+        echo "    ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem;"
+        echo "    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem;"
+        echo "    include /etc/letsencrypt/options-ssl-nginx.conf;"
+        echo "    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;"
+      else
+        echo ""
+      fi)
+    
     root /var/www/space-aschii/public;
     index index.html;
     
@@ -143,20 +166,36 @@ if ! command -v nginx &> /dev/null; then
     apt install -y nginx
 fi
 
-# Setup HTTPS if requested
+# Setup or renew HTTPS if requested
 if [ "$USE_HTTPS" = "yes" ] && [ "$DOMAIN_NAME" != "_" ]; then
-    echo "===== Setting up HTTPS for $DOMAIN_NAME ====="
+    echo "===== Setting up/renewing HTTPS for $DOMAIN_NAME ====="
     
-    # Install Certbot if not already installed
-    if ! command -v certbot &> /dev/null; then
-        apt update
-        apt install -y certbot python3-certbot-nginx
+    # Check if certificate exists already
+    if [ -d "/etc/letsencrypt/live/$DOMAIN_NAME" ]; then
+        echo "SSL certificate already exists. Attempting to renew..."
+        
+        # Install Certbot if not already installed
+        if ! command -v certbot &> /dev/null; then
+            apt update
+            apt install -y certbot python3-certbot-nginx
+        fi
+        
+        # Renew certificates
+        certbot renew --nginx
+    else
+        echo "No existing SSL certificate found. Creating new certificate..."
+        
+        # Install Certbot if not already installed
+        if ! command -v certbot &> /dev/null; then
+            apt update
+            apt install -y certbot python3-certbot-nginx
+        fi
+        
+        # Obtain and install SSL certificate with Certbot
+        certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
     fi
     
-    # Obtain and install SSL certificate with Certbot
-    certbot --nginx -d $DOMAIN_NAME -d www.$DOMAIN_NAME --non-interactive --agree-tos --email admin@$DOMAIN_NAME
-    
-    echo "HTTPS setup complete for $DOMAIN_NAME!"
+    echo "HTTPS setup/renewal complete for $DOMAIN_NAME!"
 fi
 
 # Check if Nginx config is valid
