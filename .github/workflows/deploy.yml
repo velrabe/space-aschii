@@ -59,28 +59,39 @@ jobs:
           # Upload the package to the server
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/tmp/
           
-          # Execute commands on the server to deploy the game
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST << 'ENDSSH'
-            # Create directory for the game if it doesn't exist
-            mkdir -p $DEPLOY_PATH
-            
-            # Extract files
-            tar -xzf /tmp/deploy.tar.gz -C $DEPLOY_PATH
-            
-            # Create assets directories if they don't exist (including backgrounds)
-            mkdir -p $DEPLOY_PATH/public/assets/ships
-            mkdir -p $DEPLOY_PATH/public/assets/asteroids
-            mkdir -p $DEPLOY_PATH/public/assets/resources
-            mkdir -p $DEPLOY_PATH/public/assets/effects
-            mkdir -p $DEPLOY_PATH/public/assets/ui
-            mkdir -p $DEPLOY_PATH/public/assets/backgrounds
-            
-            # Set proper permissions
-            chmod -R 755 $DEPLOY_PATH
-            
-            # Run the local deploy script if it exists
-            if [ -f "$DEPLOY_PATH/scripts/deploy.sh" ]; then
-              cd $DEPLOY_PATH
-              bash scripts/deploy.sh
-            fi
-          ENDSSH 
+          # Create a server-side deployment script
+          cat > deploy_server.sh << 'EOF'
+          #!/bin/bash
+          
+          # Create directory for the game if it doesn't exist
+          mkdir -p DEPLOY_PATH_PLACEHOLDER
+          
+          # Extract files
+          tar -xzf /tmp/deploy.tar.gz -C DEPLOY_PATH_PLACEHOLDER
+          
+          # Create assets directories if they don't exist (including backgrounds)
+          mkdir -p DEPLOY_PATH_PLACEHOLDER/public/assets/ships
+          mkdir -p DEPLOY_PATH_PLACEHOLDER/public/assets/asteroids
+          mkdir -p DEPLOY_PATH_PLACEHOLDER/public/assets/resources
+          mkdir -p DEPLOY_PATH_PLACEHOLDER/public/assets/effects
+          mkdir -p DEPLOY_PATH_PLACEHOLDER/public/assets/ui
+          mkdir -p DEPLOY_PATH_PLACEHOLDER/public/assets/backgrounds
+          
+          # Set proper permissions
+          chmod -R 755 DEPLOY_PATH_PLACEHOLDER
+          
+          # Run the local deploy script if it exists
+          if [ -f "DEPLOY_PATH_PLACEHOLDER/scripts/deploy.sh" ]; then
+            cd DEPLOY_PATH_PLACEHOLDER
+            bash scripts/deploy.sh
+          fi
+          EOF
+          
+          # Replace placeholder with actual deployment path
+          sed -i "s|DEPLOY_PATH_PLACEHOLDER|$DEPLOY_PATH|g" deploy_server.sh
+          
+          # Upload deployment script
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy_server.sh $DEPLOY_USER@$DEPLOY_HOST:/tmp/
+          
+          # Execute the deployment script on the server
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_HOST "bash /tmp/deploy_server.sh" 

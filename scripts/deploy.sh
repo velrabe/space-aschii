@@ -46,12 +46,13 @@ else
     echo "Using domain name: $DOMAIN_NAME"
 fi
 
-# Create the Nginx configuration
+# Create the Nginx configuration with default server block for IP access
 cat > /etc/nginx/sites-available/space-aschii << NGINX
+# Default server configuration for IP-based access
 server {
-    listen 80;
-    server_name ${DOMAIN_NAME};
-
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    
     root /var/www/space-aschii/public;
     index index.html;
     
@@ -82,7 +83,49 @@ server {
     # Allow cross-origin requests (useful for fetching SVGs)
     add_header Access-Control-Allow-Origin "*";
 }
+
+# Domain-specific configuration if domain is provided
 NGINX
+
+# Add domain-specific server block if domain is provided
+if [ "$DOMAIN_NAME" != "_" ]; then
+    cat >> /etc/nginx/sites-available/space-aschii << NGINX_DOMAIN
+server {
+    listen 80;
+    server_name ${DOMAIN_NAME} www.${DOMAIN_NAME};
+    
+    root /var/www/space-aschii/public;
+    index index.html;
+    
+    # Include MIME types for the entire server
+    include /etc/nginx/mime.types;
+    
+    # Explicitly set SVG MIME type
+    types {
+        image/svg+xml           svg svgz;
+    }
+    
+    # Force HTML files to be properly served for preview.html
+    location = /assets/preview.html {
+        default_type text/html;
+        add_header Content-Type text/html;
+    }
+
+    # Allow directory listing for assets subdirectories to support preview.html
+    location /assets/ {
+        autoindex on;
+        default_type text/html;
+    }
+
+    location / {
+        try_files \$uri \$uri/ =404;
+    }
+    
+    # Allow cross-origin requests (useful for fetching SVGs)
+    add_header Access-Control-Allow-Origin "*";
+}
+NGINX_DOMAIN
+fi
     
 # Enable the site
 ln -sf /etc/nginx/sites-available/space-aschii /etc/nginx/sites-enabled/
@@ -141,7 +184,7 @@ chown -R www-data:www-data /var/www/space-aschii
 chmod -R 755 /var/www/space-aschii
 
 # Check for index.html
-if [ ! -f /var/www/space-aschii/public/index.html ]; then
+if [ ! -f "/var/www/space-aschii/public/index.html" ]; then
     echo "WARNING: index.html not found in public directory!"
 fi
 
@@ -149,13 +192,14 @@ echo "===== Checking Nginx status ====="
 systemctl status nginx | head -n 10
 
 echo "===== Deployment completed successfully! ====="
+SERVER_IP=$(hostname -I | awk '{print $1}')
+
 if [ "$USE_HTTPS" = "yes" ] && [ "$DOMAIN_NAME" != "_" ]; then
     echo "Your game should be accessible at https://$DOMAIN_NAME"
 else
     if [ "$DOMAIN_NAME" != "_" ]; then
         echo "Your game should be accessible at http://$DOMAIN_NAME"
-    else
-        echo "Your game should be accessible at http://$(hostname -I | awk '{print $1}')"
     fi
+    echo "Your game should be accessible at http://$SERVER_IP"
 fi
-echo "The asset preview is available at http://$(hostname -I | awk '{print $1}')/assets/preview.html" 
+echo "The asset preview is available at http://$SERVER_IP/assets/preview.html" 
