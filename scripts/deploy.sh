@@ -38,6 +38,12 @@ mkdir -p /etc/nginx/sites-enabled
 DOMAIN_NAME=${DOMAIN_NAME:-"_"}  # Default to catch-all if no domain specified
 USE_HTTPS=${USE_HTTPS:-"no"}     # Default to no HTTPS
 
+# Automatically use HTTPS if domain name is provided
+if [ "$DOMAIN_NAME" != "_" ] && [ "$USE_HTTPS" = "no" ]; then
+    echo "Domain name detected, enabling HTTPS by default. Set USE_HTTPS=no to disable."
+    USE_HTTPS="yes"
+fi
+
 # Get server IP if domain name is not specified
 if [ "$DOMAIN_NAME" = "_" ]; then
     SERVER_IP=$(hostname -I | awk '{print $1}')

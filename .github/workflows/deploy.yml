@@ -31,6 +31,7 @@ jobs:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
         run: |
           mkdir -p ~/.ssh
           echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
@@ -83,12 +84,14 @@ jobs:
           # Run the local deploy script if it exists
           if [ -f "DEPLOY_PATH_PLACEHOLDER/scripts/deploy.sh" ]; then
             cd DEPLOY_PATH_PLACEHOLDER
+            export DOMAIN_NAME="DOMAIN_NAME_PLACEHOLDER"
             bash scripts/deploy.sh
           fi
           EOF
           
-          # Replace placeholder with actual deployment path
+          # Replace placeholders with actual values
           sed -i "s|DEPLOY_PATH_PLACEHOLDER|$DEPLOY_PATH|g" deploy_server.sh
+          sed -i "s|DOMAIN_NAME_PLACEHOLDER|${DOMAIN_NAME:-_}|g" deploy_server.sh
           
           # Upload deployment script
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no deploy_server.sh $DEPLOY_USER@$DEPLOY_HOST:/tmp/
