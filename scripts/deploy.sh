@@ -1,60 +1,41 @@
 #!/bin/bash
 
-# Package the game files (excluding unnecessary files)
-echo "Creating deployment package..."
-tar -czf deploy.tar.gz --exclude='.git' --exclude='*.zip' --exclude='deploy.sh' --exclude='deploy.tar.gz' .
+# Simple deployment script to be run on the server after files are uploaded
 
-# Upload the package to the server with identity file
-echo "Uploading to server..."
-scp -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no deploy.tar.gz root@77.222.60.74:/root/
+echo "Starting deployment on server..."
 
-# Execute commands on the server to deploy the game
-echo "Deploying on the server..."
-ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no root@77.222.60.74 << 'EOF'
-  # Create directory for the game if it doesn't exist
-  mkdir -p /var/www/space-aschii
-  
-  # Extract files
-  tar -xzf /root/deploy.tar.gz -C /var/www/space-aschii
-  
-  # Create assets directories if they don't exist
-  mkdir -p /var/www/space-aschii/assets/ships
-  mkdir -p /var/www/space-aschii/assets/asteroids
-  mkdir -p /var/www/space-aschii/assets/resources
-  mkdir -p /var/www/space-aschii/assets/effects
-  mkdir -p /var/www/space-aschii/assets/ui
-  
-  # Set proper permissions for the web files
-  chown -R www-data:www-data /var/www/space-aschii
-  chmod -R 755 /var/www/space-aschii
-  
-  # Install dependencies (if needed)
-  cd /var/www/space-aschii
-  
-  # Configure Nginx (if not already configured)
-  if [ ! -f /etc/nginx/sites-available/space-aschii ]; then
+# Get the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
+echo "Deploying from directory: $PROJECT_DIR"
+
+# Configure Nginx (if needed)
+if [ ! -f /etc/nginx/sites-available/space-aschii ]; then
     echo "Setting up Nginx configuration..."
-    mkdir -p /etc/nginx/sites-available
-    mkdir -p /etc/nginx/sites-enabled
     
-    cat > /etc/nginx/sites-available/space-aschii << 'NGINX'
+    # Create necessary directories if they don't exist
+    sudo mkdir -p /etc/nginx/sites-available
+    sudo mkdir -p /etc/nginx/sites-enabled
+    
+    # Create the Nginx configuration
+    sudo tee /etc/nginx/sites-available/space-aschii > /dev/null << 'NGINX'
 server {
     listen 80;
     server_name _;
 
-    root /var/www/space-aschii;
+    root /var/www/space-aschii/public;
     index index.html;
     
     # Include MIME types for the entire server
     include /etc/nginx/mime.types;
     
-    # Explicitly set HTML MIME type
+    # Explicitly set SVG MIME type
     types {
-        text/html               html htm shtml;
         image/svg+xml           svg svgz;
     }
     
-    # Force HTML files to be properly served for the preview.html file
+    # Force HTML files to be properly served for preview.html
     location = /assets/preview.html {
         default_type text/html;
         add_header Content-Type text/html;
@@ -76,41 +57,43 @@ server {
 NGINX
     
     # Enable the site
-    ln -sf /etc/nginx/sites-available/space-aschii /etc/nginx/sites-enabled/
+    sudo ln -sf /etc/nginx/sites-available/space-aschii /etc/nginx/sites-enabled/
     
-    # Check if nginx is installed, if not, install it
+    # Check if Nginx is installed, if not, try to install it
     if ! command -v nginx &> /dev/null; then
         echo "Nginx not found. Installing..."
-        apt update
-        apt install -y nginx
+        sudo apt update
+        sudo apt install -y nginx
     fi
     
-    # Check if nginx config is valid
-    nginx -t
+    # Check if Nginx config is valid
+    sudo nginx -t
     
     # Restart Nginx
-    systemctl restart nginx
-  else
-    # Update existing Nginx config to support assets directory listing
-    echo "Updating Nginx configuration..."
-    cat > /etc/nginx/sites-available/space-aschii << 'NGINX'
+    sudo systemctl restart nginx
+else
+    echo "Nginx already configured. Reloading configuration..."
+    
+    # Make sure the configuration is updated
+    sudo cp -f /etc/nginx/sites-available/space-aschii /etc/nginx/sites-available/space-aschii.bak
+    
+    sudo tee /etc/nginx/sites-available/space-aschii > /dev/null << 'NGINX'
 server {
     listen 80;
     server_name _;
 
-    root /var/www/space-aschii;
+    root /var/www/space-aschii/public;
     index index.html;
     
     # Include MIME types for the entire server
     include /etc/nginx/mime.types;
     
-    # Explicitly set HTML MIME type
+    # Explicitly set SVG MIME type
     types {
-        text/html               html htm shtml;
         image/svg+xml           svg svgz;
     }
     
-    # Force HTML files to be properly served for the preview.html file
+    # Force HTML files to be properly served for preview.html
     location = /assets/preview.html {
         default_type text/html;
         add_header Content-Type text/html;
@@ -131,28 +114,18 @@ server {
 }
 NGINX
     
-    # Check if nginx config is valid
-    nginx -t
-    
-    # Restart Nginx
-    systemctl restart nginx
-  fi
+    # Reload Nginx
+    sudo nginx -t && sudo systemctl reload nginx
+fi
 
-  # Make sure the MIME types are correctly set
-  echo "Ensuring preview.html has the correct MIME type..."
-  touch /var/www/space-aschii/assets/preview.html
-  
-  # Verify Content-Type header
-  echo "Testing preview.html Content-Type header..."
-  curl -I http://localhost/assets/preview.html
+# Copy project files to the webroot if not already in the correct location
+if [ "$PROJECT_DIR" != "/var/www/space-aschii" ]; then
+    echo "Copying project files to web root..."
+    sudo mkdir -p /var/www/space-aschii
+    sudo cp -R "$PROJECT_DIR"/* /var/www/space-aschii/
+    sudo chmod -R 755 /var/www/space-aschii
+fi
 
-  echo "Deployment complete! Your game should be accessible via the server's IP address: http://77.222.60.74"
-  echo "The Wiki/Asset Preview is available at: http://77.222.60.74/assets/preview.html"
-EOF
-
-# Clean up local deployment package
-rm deploy.tar.gz
-
-echo "Deployment process completed!"
-echo "Main game: http://77.222.60.74"
-echo "Asset Wiki: http://77.222.60.74/assets/preview.html" 
+echo "Deployment completed successfully!"
+echo "Your game should be accessible at http://$(hostname -I | awk '{print $1}')"
+echo "The asset preview is available at http://$(hostname -I | awk '{print $1}')/assets/preview.html" 
