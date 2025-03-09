@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="20" height="8" viewBox="0 0 20 8" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bulletGradient" x1="0%" y1="50%" x2="100%" y2="50%">
+      <stop offset="0%" stop-color="#ffcc00"/>
+      <stop offset="100%" stop-color="#ff6600"/>
+    </linearGradient>
+  </defs>
+  <path d="M0,4 L5,1 L18,1 L20,4 L18,7 L5,7 Z" fill="url(#bulletGradient)" stroke="#ffffff" stroke-width="0.5"/>
+  <circle cx="16" cy="4" r="2" fill="#ff9900" stroke="#ffffff" stroke-width="0.3"/>
+</svg> 

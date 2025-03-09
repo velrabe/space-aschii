@@ -4,9 +4,24 @@ const { Asteroid } = require('../entities/asteroid.js');
 const { InputManager } = require('../input/inputManager.js');
 const { createKeyVisualizer } = require('../ui/keyVisualizer.js');
 const { BackgroundStars } = require('../entities/backgroundStars.js');
+const { ShootingManager } = require('./shootingManager.js');
 
 // Set up paper.js
 paper.install(window);
+
+// Определяем gameState как действительно глобальную переменную через объект window
+window.gameState = null;
+
+// Функция для отрисовки всех элементов игры
+function renderGame() {
+    // Проверяем инициализацию gameState
+    if (!window.gameState) return;
+    
+    // Рисуем пули, если есть менеджер стрельбы
+    if (window.gameState.shootingManager) {
+        window.gameState.shootingManager.draw(paper.view.context);
+    }
+}
 
 // Wait for the DOM to load
 document.addEventListener('DOMContentLoaded', function() {
@@ -28,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputManager = new InputManager();
 
     // Game state
-    const gameState = {
+    window.gameState = {
         canExtract: true,
         activeExtractors: [],
         activeLoot: [],
@@ -36,7 +51,8 @@ document.addEventListener('DOMContentLoaded', function() {
         debugShots: true,  // Включить отладку выстрелов
         keyDebug: {}, // Объект для хранения отладочной информации о клавишах
         ship: null, // Корабль игрока
-        backgroundStars: null // Фоновые звезды
+        backgroundStars: null, // Фоновые звезды
+        shootingManager: null // Менеджер стрельбы
     };
 
     // ResourceManager class to handle resources
@@ -62,8 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Update total resources in ship
-            if (gameState.ship) {
-                gameState.ship.setResources(this.getResourceTotal());
+            if (window.gameState.ship) {
+                window.gameState.ship.setResources(this.getResourceTotal());
             }
         }
         
@@ -83,8 +99,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 // Update total resources in ship
-                if (gameState.ship) {
-                    gameState.ship.setResources(this.getResourceTotal());
+                if (window.gameState.ship) {
+                    window.gameState.ship.setResources(this.getResourceTotal());
                 }
                 
                 return true;
@@ -98,32 +114,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const resourceManager = new ResourceManager();
     
     // Создаем корабль игрока
-    gameState.ship = new Ship(paper.view.center);
+    window.gameState.ship = new Ship(paper.view.center);
+    
+    // Создаем менеджер стрельбы с включенным режимом отладки
+    window.gameState.shootingManager = new ShootingManager(window.gameState.ship, paper.view, true);
     
     // Создаем астероид
     const asteroid = new Asteroid(new paper.Point(600, 300), 'high');
     
     // Создаем и инициализируем звездный фон
-    gameState.backgroundStars = new BackgroundStars();
-    gameState.backgroundStars.initialize();
+    window.gameState.backgroundStars = new BackgroundStars();
+    window.gameState.backgroundStars.initialize();
     
     // Main game loop
     paper.view.onFrame = function(event) {
         // Обновляем фоновую анимацию звезд с небольшой фиксированной скоростью
         // или используем скорость корабля, если она доступна
-        if (gameState.backgroundStars) {
-            const velocity = gameState.ship ? gameState.ship.velocity : new paper.Point(0.3, 0.1);
-            gameState.backgroundStars.update(velocity);
+        if (window.gameState.backgroundStars) {
+            const velocity = window.gameState.ship ? window.gameState.ship.velocity : new paper.Point(0.3, 0.1);
+            window.gameState.backgroundStars.update(velocity);
         }
         
         // Update ship position - pass the key states directly
-        if (gameState.ship) {
-            gameState.ship.update(inputManager.getKeyStates());
+        if (window.gameState.ship) {
+            // Obtener estados de teclas
+            const keyStates = inputManager.getKeyStates();
+            
+            // Comprobar si se debe disparar
+            if (keyStates.shoot) {
+                console.log("Game: Detectada tecla de disparo");
+                if (window.gameState.shootingManager.shoot()) {
+                    console.log("Game: Disparo exitoso");
+                }
+                // Reiniciar el estado de disparo para evitar disparos continuos
+                inputManager.setKeyState('shoot', false);
+            }
+            
+            // Actualizar el barco con los estados de las teclas
+            window.gameState.ship.update(keyStates);
+        }
+        
+        // Обновляем состояние пуль
+        if (window.gameState.shootingManager) {
+            window.gameState.shootingManager.update();
         }
         
         // Update extractors
-        for (let i = gameState.activeExtractors.length - 1; i >= 0; i--) {
-            const extractor = gameState.activeExtractors[i];
+        for (let i = window.gameState.activeExtractors.length - 1; i >= 0; i--) {
+            const extractor = window.gameState.activeExtractors[i];
             extractor.update();
             
             // Check if extractor has reached its target
@@ -135,24 +173,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Remove extractor
                 extractor.remove();
-                gameState.activeExtractors.splice(i, 1);
+                window.gameState.activeExtractors.splice(i, 1);
             }
         }
         
         // Update loot
-        for (let i = gameState.activeLoot.length - 1; i >= 0; i--) {
-            const loot = gameState.activeLoot[i];
+        for (let i = window.gameState.activeLoot.length - 1; i >= 0; i--) {
+            const loot = window.gameState.activeLoot[i];
             
             // Check if ship is close enough to collect loot
-            if (gameState.ship && loot.position.getDistance(gameState.ship.position) < 50) {
+            if (window.gameState.ship && loot.position.getDistance(window.gameState.ship.position) < 50) {
                 // Add resources to player
                 resourceManager.addResources(loot.contents);
                 
                 // Remove loot
                 loot.remove();
-                gameState.activeLoot.splice(i, 1);
+                window.gameState.activeLoot.splice(i, 1);
             }
         }
+        
+        // Отрисовка всех элементов
+        renderGame();
         
         // Force redraw to ensure all visual elements are updated
         paper.view.draw();
